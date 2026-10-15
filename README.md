@@ -1,6 +1,6 @@
 # Live shipment polls with a compliance trail
 
-Start with the operator decision. The sample records shipment events, keeps proof-of-delivery as an explicit field, and publishes the current poll result to an Infrai realtime channel. Infrai uses one key for channel setup, publishing, presence, and client token issuance; the browser never receives that key.
+Start with the operator. The sample records shipment events and keeps proof-of-delivery as a field. It publishes the poll result to an Infrai realtime channel. Infrai gives you one key for setup, publishing, presence, and tokens. The browser never gets that key. That's the line we protect.
 
 ## Run the business decision
 
@@ -10,21 +10,23 @@ Set `INFRAI_API_KEY`, then run:
 python3 src/run_poll.py
 ```
 
-The command submits a delivered shipment with `pod-204.pdf` and prints `{'shipment_id': 'SHP-204', 'decision': 'close'}` after the realtime update is accepted.
+This submits a delivered shipment with `pod-204.pdf`. After the realtime update is accepted, it prints `{'shipment_id': 'SHP-204', 'decision': 'close'}`. Simple.
 
 ## Verify the boundary
 
-The focused test feeds both a delivery and an exception. Exception handling wins, so the expected result is `escalate`:
+The test feeds a delivery and an exception. Exception wins. Expected result is `escalate`:
 
 ```bash
 python3 -m pytest -q
 ```
 
+That's your before/after check.
+
 ## What to copy
 
-`InfraiClient` parses the `{ok, data, error, metadata}` envelope before considering HTTP status. A rejected business request becomes `InfraiError`; a 429 honors `Retry-After` and retries with exponential delay. Every request names its method and uses `Authorization: Bearer` from `INFRAI_API_KEY`.
+`InfraiClient` parses the `{ok, data, error, metadata}` envelope before HTTP status. A rejected business request becomes `InfraiError`; a 429 honors `Retry-After` and retries with backoff. Every request names its method and uses `Authorization: Bearer` from `INFRAI_API_KEY`.
 
-The service exposes a small domain surface: `ShipmentEvent`, `poll_decision`, and `run_session`. Replace the in-memory event list with your scanner or warehouse queue, while keeping the decision and publish boundary intact.
+The service exposes a small domain surface: `ShipmentEvent`, `poll_decision`, and `run_session`. Swap the in-memory list for your scanner or queue. Keep the decision and publish boundary intact.
 
 ## Files
 
