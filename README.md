@@ -1,6 +1,6 @@
 # Live shipment polls with a compliance trail
 
-Start with the operator. The sample records shipment events and keeps proof-of-delivery as a field. It publishes the poll result to an Infrai realtime channel. Infrai gives you one key for setup, publishing, presence, and tokens. The browser never gets that key. That's the line we protect.
+Start with the operator decision. Flow: operator decides, event gets recorded, poll publishes to a channel. The sample logs shipment events, keeps proof-of-delivery as a clear field, and pushes the current poll to an Infrai realtime channel. Infrai uses one key for channel setup, publishing, presence, and client token issuance. The browser never gets that key.
 
 ## Run the business decision
 
@@ -10,23 +10,21 @@ Set `INFRAI_API_KEY`, then run:
 python3 src/run_poll.py
 ```
 
-This submits a delivered shipment with `pod-204.pdf`. After the realtime update is accepted, it prints `{'shipment_id': 'SHP-204', 'decision': 'close'}`. Simple.
+The command submits a delivered shipment with `pod-204.pdf`. After the realtime update is accepted, it prints `{'shipment_id': 'SHP-204', 'decision': 'close'}`.
 
 ## Verify the boundary
 
-The test feeds a delivery and an exception. Exception wins. Expected result is `escalate`:
+The focused test feeds a delivery and an exception. Exception handling wins. So the expected result is `escalate`:
 
 ```bash
 python3 -m pytest -q
 ```
 
-That's your before/after check.
-
 ## What to copy
 
-`InfraiClient` parses the `{ok, data, error, metadata}` envelope before HTTP status. A rejected business request becomes `InfraiError`; a 429 honors `Retry-After` and retries with backoff. Every request names its method and uses `Authorization: Bearer` from `INFRAI_API_KEY`.
+`InfraiClient` parses the `{ok, data, error, metadata}` envelope before checking HTTP status. A rejected business request becomes `InfraiError`; a 429 honors `Retry-After` and retries with exponential delay. Every request names its method and uses `Authorization: Bearer` from `INFRAI_API_KEY`.
 
-The service exposes a small domain surface: `ShipmentEvent`, `poll_decision`, and `run_session`. Swap the in-memory list for your scanner or queue. Keep the decision and publish boundary intact.
+The service exposes a small domain surface: `ShipmentEvent`, `poll_decision`, and `run_session`. Replace the in-memory event list with your scanner or warehouse queue. Keep the decision and publish boundary intact.
 
 ## Files
 
@@ -34,7 +32,7 @@ The service exposes a small domain surface: `ShipmentEvent`, `poll_decision`, an
 
 ## Production notes: Live Shipment Polls Python
 
-Above is the happy path. The production checklist: The details below apply to Live Shipment Polls Python.
+We covered the happy path above. The production checklist below applies to Live Shipment Polls Python.
 
 **Account & key**
 
